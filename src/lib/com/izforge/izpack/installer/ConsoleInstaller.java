@@ -20,12 +20,6 @@
  */
 package com.izforge.izpack.installer;
 
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.FileInputStream;
-import java.util.Iterator;
-import java.util.Properties;
-
 import com.izforge.izpack.LocaleDatabase;
 import com.izforge.izpack.Panel;
 import com.izforge.izpack.installer.DataValidator.Status;
@@ -34,6 +28,12 @@ import com.izforge.izpack.util.Housekeeper;
 import com.izforge.izpack.util.OsConstraint;
 import com.izforge.izpack.util.VariableSubstitutor;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.util.Iterator;
+import java.util.Properties;
+
 /**
  * Runs the console installer
  * 
@@ -41,30 +41,45 @@ import com.izforge.izpack.util.VariableSubstitutor;
  */
 public class ConsoleInstaller extends InstallerBase
 {
-
-    private AutomatedInstallData installdata = new AutomatedInstallData();
+    private AutomatedInstallData installdata = AutomatedInstallData.getInstance();
 
     private boolean result = false;
-
     private Properties properties;
-
     private PrintWriter printWriter;
 
     public ConsoleInstaller(String langcode) throws Exception
     {
         super();
         loadInstallData(this.installdata);
-        
+
         this.installdata.localeISO3 = langcode;
         // Fallback: choose the first listed language pack if not specified via commandline
         if (this.installdata.localeISO3 == null)
         {
             this.installdata.localeISO3 = getAvailableLangPacks().get(0);
         }
-        
-        InputStream in = getClass().getResourceAsStream(
-                "/langpacks/" + this.installdata.localeISO3 + ".xml");
-        this.installdata.langpack = new LocaleDatabase(in);
+
+        InputStream in = getClass().getResourceAsStream("/langpacks/" + this.installdata.localeISO3 + ".xml");
+        try
+        {
+            this.installdata.langpack = new LocaleDatabase(in);
+        }
+        finally
+        {
+            in.close();
+        }
+
+        InputStream overrides = ResourceManager.getInstance().getInputStream("packsLang.xml");
+        try
+        {
+            this.installdata.langpack.add(overrides);
+        }
+        finally
+        {
+            in.close();
+        }
+
+        //this.installdata.langpack.
         this.installdata.setVariable(ScriptParser.ISO3_LANG, this.installdata.localeISO3);
         ResourceManager.create(this.installdata);
         loadConditions(installdata);
@@ -95,7 +110,7 @@ public class ConsoleInstaller extends InstallerBase
             VariableSubstitutor substitutor = new VariableSubstitutor(this.installdata.getVariables());
             while (panelsIterator.hasNext())
             {
-                Panel p = (Panel) panelsIterator.next();
+                Panel p = panelsIterator.next();
                 this.installdata.curPanelNumber++;
                 String praefix = "com.izforge.izpack.panels.";
                 if (p.className.compareTo(".") > -1)
@@ -106,21 +121,19 @@ public class ConsoleInstaller extends InstallerBase
                 {
                     continue;
                 }
+
                 String panelClassName = p.className;
                 String consoleHelperClassName = praefix + panelClassName + "ConsoleHelper";
-                Class<PanelConsole> consoleHelperClass = null;
-
-                Debug.log("ConsoleHelper:" + consoleHelperClassName);
+                Class<PanelConsole> consoleHelperClass;
+                Debug.log("ConsoleHelper: " + consoleHelperClassName);
                 try
                 {
 
-                    consoleHelperClass = (Class<PanelConsole>) Class
-                            .forName(consoleHelperClassName);
+                    consoleHelperClass = (Class<PanelConsole>) Class.forName(consoleHelperClassName);
 
-                }
-                catch (ClassNotFoundException e)
+                } catch (ClassNotFoundException e)
                 {
-                    Debug.log("ClassNotFoundException-skip :" + consoleHelperClassName);
+                    Debug.log("ClassNotFoundException-skip: " + consoleHelperClassName);
                     continue;
                 }
                 PanelConsole consoleHelperInstance = null;
@@ -128,14 +141,12 @@ public class ConsoleInstaller extends InstallerBase
                 {
                     try
                     {
-                        Debug.log("Instantiate :" + consoleHelperClassName);
+                        Debug.log("Instantiate: " + consoleHelperClassName);
                         refreshDynamicVariables(substitutor, installdata);
                         consoleHelperInstance = consoleHelperClass.newInstance();
-                    }
-                    catch (Exception e)
+                    } catch (Exception e)
                     {
-                        Debug.log("ERROR: no default constructor for " + consoleHelperClassName
-                                + ", skipping...");
+                        Debug.log("ERROR: no default constructor for " + consoleHelperClassName + ", skipping...");
                         continue;
                     }
                 }
@@ -144,8 +155,7 @@ public class ConsoleInstaller extends InstallerBase
                 {
                     try
                     {
-                        Debug.log("consoleHelperInstance." + strAction + ":"
-                                + consoleHelperClassName + " entered.");
+                        Debug.log("consoleHelperInstance." + strAction + ": " + consoleHelperClassName + " entered.");
                         boolean bActionResult = true;
                         boolean bIsConditionFulfilled = true;
                         String strCondition = p.getCondition();
@@ -162,13 +172,11 @@ public class ConsoleInstaller extends InstallerBase
                                 bActionResult = consoleHelperInstance.runConsole(this.installdata);
                             }
                             while (!validatePanel(p));
-                        }
-                        else if (strAction.equals("doGeneratePropertiesFile"))
+                        } else if (strAction.equals("doGeneratePropertiesFile"))
                         {
                             bActionResult = consoleHelperInstance.runGeneratePropertiesFile(
                                     this.installdata, this.printWriter);
-                        }
-                        else if (strAction.equals("doInstallFromPropertiesFile")
+                        } else if (strAction.equals("doInstallFromPropertiesFile")
                                 && bIsConditionFulfilled)
                         {
                             bActionResult = consoleHelperInstance.runConsoleFromPropertiesFile(
@@ -178,14 +186,12 @@ public class ConsoleInstaller extends InstallerBase
                         {
                             this.result = false;
                             return;
-                        }
-                        else
+                        } else
                         {
                             Debug.log("consoleHelperInstance." + strAction + ":"
                                     + consoleHelperClassName + " successfully done.");
                         }
-                    }
-                    catch (Exception e)
+                    } catch (Exception e)
                     {
                         Debug.log("ERROR: console installation failed for panel " + panelClassName);
                         e.printStackTrace();
@@ -199,13 +205,11 @@ public class ConsoleInstaller extends InstallerBase
             if (this.result)
             {
                 System.out.println("[ Console installation done ]");
-            }
-            else
+            } else
             {
                 System.out.println("[ Console installation FAILED! ]");
             }
-        }
-        catch (Exception e)
+        } catch (Exception e)
         {
             this.result = false;
             System.err.println(e.toString());
@@ -220,13 +224,10 @@ public class ConsoleInstaller extends InstallerBase
         try
         {
             iterateAndPerformAction("doInstall");
-        }
-        catch (Exception e)
+        } catch (Exception e)
         {
             throw e;
-        }
-
-        finally
+        } finally
         {
             Housekeeper.getInstance().shutDown(this.result ? 0 : 1);
         }
@@ -239,13 +240,10 @@ public class ConsoleInstaller extends InstallerBase
             this.printWriter = new PrintWriter(strFile);
             iterateAndPerformAction("doGeneratePropertiesFile");
             this.printWriter.flush();
-        }
-        catch (Exception e)
+        } catch (Exception e)
         {
             throw e;
-        }
-
-        finally
+        } finally
         {
             this.printWriter.close();
             Housekeeper.getInstance().shutDown(this.result ? 0 : 1);
@@ -261,12 +259,10 @@ public class ConsoleInstaller extends InstallerBase
             properties = new Properties();
             properties.load(in);
             iterateAndPerformAction("doInstallFromPropertiesFile");
-        }
-        catch (Exception e)
+        } catch (Exception e)
         {
             throw e;
-        }
-        finally
+        } finally
         {
             in.close();
             Housekeeper.getInstance().shutDown(this.result ? 0 : 1);
@@ -275,7 +271,7 @@ public class ConsoleInstaller extends InstallerBase
 
     /**
      * Validate a panel.
-     * 
+     *
      * @param p The panel to validate
      * @return The status of the validation - false makes the installation fail
      */
@@ -286,20 +282,21 @@ public class ConsoleInstaller extends InstallerBase
         {
             DataValidator validator = DataValidatorFactory.createDataValidator(dataValidator);
             Status validationResult = validator.validateData(installdata);
-            if (validationResult != DataValidator.Status.OK)
+            switch (validationResult)
             {
-                // if defaultAnswer is true, result is ok
-                if (validationResult == Status.WARNING && validator.getDefaultAnswer())
-                {
-                    System.out
-                            .println("Configuration said, it's ok to go on, if validation is not successfull");
-                }
-                else
-                {
-                    // make installation fail instantly
-                    System.out.println("Validation failed, please verify your input");
+                case ERROR:
+                    System.out.println();
+                    System.out.println(installdata.langpack.getString(validator.getErrorMessageId()));
+                    System.out.println();
                     return false;
-                }
+
+                case WARNING:
+                    System.out.println();
+                    System.out.println(installdata.langpack.getString(validator.getWarningMessageId()));
+                    System.out.println();
+                    return false;
+
+                default: return true;
             }
         }
         return true;
@@ -316,7 +313,7 @@ public class ConsoleInstaller extends InstallerBase
             case Installer.CONSOLE_FROM_TEMPLATE:
                 doInstallFromPropertiesFile(path);
                 break;
-                
+
             default:
                 doInstall();
         }

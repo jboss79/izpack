@@ -158,7 +158,7 @@ public class AutomatedInstallData implements Serializable
      * the one possible object will be stored in this
      * static member.
      */
-    private static AutomatedInstallData self = null;
+    private static final AutomatedInstallData self = new AutomatedInstallData();
 
     /**
      * Returns the one possible object of this class.
@@ -167,7 +167,7 @@ public class AutomatedInstallData implements Serializable
      */
     public static AutomatedInstallData getInstance()
     {
-        return (self);
+        return self;
     }
 
     /**
@@ -175,7 +175,7 @@ public class AutomatedInstallData implements Serializable
      * Only one should be possible, at a scound call a RuntimeException
      * will be raised.
      */
-    public AutomatedInstallData()
+    protected AutomatedInstallData()
     {
         availablePacks = new ArrayList<Pack>();
         selectedPacks = new ArrayList();
@@ -185,11 +185,6 @@ public class AutomatedInstallData implements Serializable
         variables = new Properties();
         attributes = new HashMap<String, Object>();
         customData = new HashMap<String, List>();
-        if (self != null)
-        {
-            throw new RuntimeException("Panic!! second call of the InstallData Ctor!!");
-        }
-        self = this;
     }
 
     /**

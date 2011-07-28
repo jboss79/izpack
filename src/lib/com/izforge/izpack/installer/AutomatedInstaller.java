@@ -59,7 +59,7 @@ public class AutomatedInstaller extends InstallerBase
     /**
      * The automated installation data.
      */
-    private AutomatedInstallData idata = new AutomatedInstallData();
+    private AutomatedInstallData idata = AutomatedInstallData.getInstance();
 
     /**
      * The result of the installation.
