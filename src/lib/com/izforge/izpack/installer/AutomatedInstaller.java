@@ -57,9 +57,9 @@ public class AutomatedInstaller extends InstallerBase
     private TreeMap<String, Integer> panelInstanceCount;
 
     /**
-     * The automated installation data.
-     */
-    private AutomatedInstallData idata = AutomatedInstallData.getInstance();
+         * The automated installation data.
+         */
+    private AutomatedInstallData idata;
 
     /**
      * The result of the installation.
@@ -78,6 +78,8 @@ public class AutomatedInstaller extends InstallerBase
 
         File input = new File(inputFilename);
 
+        AutomatedInstallData.initializeAutomatedInstall();
+        idata = AutomatedInstallData.getInstance();
         // Loads the installation data
         loadInstallData(this.idata);
 

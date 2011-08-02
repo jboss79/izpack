@@ -153,28 +153,38 @@ public class AutomatedInstallData implements Serializable
      */
     protected Map<String, Object> attributes;
 
-    /**
+  /**
      * This class should be a singleton. Therefore
      * the one possible object will be stored in this
      * static member.
      */
-    private static final AutomatedInstallData self = new AutomatedInstallData();
+    private static AutomatedInstallData self;
 
     /**
-     * Returns the one possible object of this class.
-     *
-     * @return the one possible object of this class
-     */
+         * Returns the one possible object of this class.
+         *
+         * @return the one possible object of this class
+         */
     public static AutomatedInstallData getInstance()
     {
         return self;
     }
 
+    public static void initializeManualInstall()
+    {
+        self = new InstallData();
+    }
+
+    public static void initializeAutomatedInstall()
+    {
+        self = new AutomatedInstallData();
+    }
+
     /**
-     * Constructs a new instance of this class.
-     * Only one should be possible, at a scound call a RuntimeException
-     * will be raised.
-     */
+         * Constructs a new instance of this class.
+         * Only one should be possible, at a scound call a RuntimeException
+         * will be raised.
+         */
     protected AutomatedInstallData()
     {
         availablePacks = new ArrayList<Pack>();

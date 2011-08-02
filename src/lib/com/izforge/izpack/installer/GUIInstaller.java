@@ -107,8 +107,8 @@ public class GUIInstaller extends InstallerBase
     
     private void init() throws Exception
     {
-    
-        this.installdata = new InstallData();                
+        AutomatedInstallData.initializeManualInstall();
+        this.installdata = (InstallData) AutomatedInstallData.getInstance();
         
         // Loads the installation data
         loadInstallData(installdata);
