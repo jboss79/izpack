@@ -41,7 +41,7 @@ import java.util.Properties;
  */
 public class ConsoleInstaller extends InstallerBase
 {
-    private AutomatedInstallData installdata = AutomatedInstallData.getInstance();
+    private AutomatedInstallData installdata;
 
     private boolean result = false;
     private Properties properties;
@@ -50,6 +50,9 @@ public class ConsoleInstaller extends InstallerBase
     public ConsoleInstaller(String langcode) throws Exception
     {
         super();
+
+        AutomatedInstallData.initializeManualInstall();
+        this.installdata = AutomatedInstallData.getInstance();
         loadInstallData(this.installdata);
 
         this.installdata.localeISO3 = langcode;
