@@ -20,18 +20,6 @@
  */
 package com.izforge.izpack.panels;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
-import java.util.StringTokenizer;
-import java.util.Vector;
-
 import com.izforge.izpack.Pack;
 import com.izforge.izpack.Panel;
 import com.izforge.izpack.adaptator.IXMLElement;
@@ -42,6 +30,12 @@ import com.izforge.izpack.util.Debug;
 import com.izforge.izpack.util.OsVersion;
 import com.izforge.izpack.util.SpecHelper;
 import com.izforge.izpack.util.VariableSubstitutor;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.*;
 
 /**
  * The user input panel console helper class.
@@ -316,18 +310,40 @@ public class UserInputPanelConsoleHelper extends PanelConsoleHelper implements P
         return true;
     }
     
-    boolean processPasswordField(Input input, AutomatedInstallData idata) {
+    boolean processPasswordField(Input field, AutomatedInstallData idata)
+    {
+        Password pwd = (Password) field;
 
-        Password pwd = (Password) input;
-        
-        boolean rtn = false;
-        for (int i=0; i < pwd.input.length; i++) {
-            rtn = processTextField(pwd.input[i], idata);
-            if (!rtn) return rtn;
+        String previous = null;
+        Input[] input = pwd.input;
+        for (int i = 0, inputLength = input.length; i < inputLength; i++)
+        {
+            Input eachPwd = input[i];
+            System.out.println();
+            System.out.println(eachPwd.listChoices.get(i).strText);
+            String userInput = new String(System.console().readPassword());
+            if (!userInput.trim().equals(""))
+            {
+                // if it's the first password box, store it, else compare subsequent passwords with the first one
+                if (previous == null)
+                {
+                    previous = userInput;
+                } else
+                {
+                    if (!previous.equals(userInput))
+                    {
+                        System.out.println("Password does not match");
+                        return false;
+                    }
+                }
+            } else
+            {
+                System.out.println("Empty password is not valid");
+                return false; // empty is not valid for password
+            }
+            idata.setVariable(eachPwd.strVariableName, previous);
         }
-    
-        return rtn;
-        
+        return true;
     }
 
     boolean processTextField(Input input, AutomatedInstallData idata)
