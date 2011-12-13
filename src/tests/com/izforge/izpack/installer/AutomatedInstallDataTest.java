@@ -24,7 +24,7 @@ public class AutomatedInstallDataTest extends TestCase
 {
     public void testContruction()
     {
-        AutomatedInstallData auto = new AutomatedInstallData();
+        AutomatedInstallData auto = AutomatedInstallData.getInstance();
         IXMLElement xmlElement = auto.xmlData;
         assertEquals("AutomatedInstallation", xmlElement.getName());
     }

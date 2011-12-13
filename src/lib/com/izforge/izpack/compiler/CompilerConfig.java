@@ -2329,11 +2329,7 @@ public class CompilerConfig extends Thread {
             }
             else
             {
-                if (ignoreWhenNotFound)
-                {
-                    parseWarn(parent, desc + " not found: " + resource);
-                }
-                else
+                if (!ignoreWhenNotFound)
                 {
                     parseError(parent, desc + " not found: " + resource);
                 }

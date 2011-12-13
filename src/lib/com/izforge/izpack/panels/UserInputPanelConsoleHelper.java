@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -382,41 +381,40 @@ public class UserInputPanelConsoleHelper extends PanelConsoleHelper implements P
         return true;
     }
     
-    boolean processPasswordField(Input input, AutomatedInstallData idata) {
+    boolean processPasswordField(Input field, AutomatedInstallData idata)
+    {
+        Password pwd = (Password) field;
 
-        Password pwd = (Password) input;
-        
-        boolean rtn = false;
-        List<String> values = new LinkedList<String>();
-        for (int i = 0; i < pwd.input.length; i++)
+        String previous = null;
+        Input[] input = pwd.input;
+        for (int i = 0, inputLength = input.length; i < inputLength; i++)
         {
-            while (true)
+            Input eachPwd = input[i];
+            System.out.println();
+            System.out.println(eachPwd.listChoices.get(i).strText);
+            String userInput = new String(System.console().readPassword());
+            if (!userInput.trim().equals(""))
             {
-                boolean done = true;
-                rtn = processTextField(pwd.input[i], idata);
-                if (!rtn) return rtn;
-                values.add(idata.getVariable(pwd.input[i].strVariableName));
-                if (i > 0 && pwd.validators != null && !pwd.validators.isEmpty())
+                // if it's the first password box, store it, else compare subsequent passwords with the first one
+                if (previous == null)
                 {
-                    MultipleFieldValidator validation = new MultipleFieldValidator(values,
-                            pwd.validators);
-                    if (!validation.validate())
+                    previous = userInput;
+                } else
+                {
+                    if (!previous.equals(userInput))
                     {
-                        values.remove(values.size() - 1);
-                        done = false;
-                        System.out.println("Validation failed, please verify your input.");
-                        System.out.println("Validation error: " + validation.getValidationMessage());
+                        System.out.println("Password does not match");
+                        return false;
                     }
                 }
-                if (done)
-                {
-                    break;
-                }
+            } else
+            {
+                System.out.println("Empty password is not valid");
+                return false; // empty is not valid for password
             }
+            idata.setVariable(eachPwd.strVariableName, previous);
         }
-
-        return rtn;
-
+        return true;
     }
 
     boolean processTextField(Input input, AutomatedInstallData idata)

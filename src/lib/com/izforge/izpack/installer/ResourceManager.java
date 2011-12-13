@@ -121,7 +121,7 @@ public class ResourceManager
     {
         if (ResourceManager.instance == null)
         {
-            ResourceManager.instance = new ResourceManager( new AutomatedInstallData() );
+            ResourceManager.instance = new ResourceManager(AutomatedInstallData.getInstance());
         }
         return ResourceManager.instance;
     }
